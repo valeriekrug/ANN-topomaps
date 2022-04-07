@@ -1,0 +1,30 @@
+{
+  "model": "FAIRFACE-VGG16",
+  "data": "FAIRFACE",
+  "data_path": "/path_to_FairFace_data/",
+  "layers": [
+    3, 6, 10, 14, 18, 21
+  ],
+  "distance_metric": "cosine",
+  "nap_params": {
+    "n_random_examples": 150,
+    "error_mode": "None"
+  },
+  "topomap_params": {
+    "neuron_activations": {
+      "use_naps": true,
+      "n_random_examples": 100,
+      "balance_by_label": false,
+      "use_correct_only": true
+    },
+    "methods": ["UMAP_PSO"]
+  },
+  "plot_params": {
+    "plot_inputs": true,
+    "avg_inputs": false,
+    "ordered": true,
+    "scale": 2.0,
+    "use_title": true,
+    "plot_individually": false
+  }
+}

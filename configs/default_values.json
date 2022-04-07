@@ -1,0 +1,24 @@
+{
+  "layers": [
+    0
+  ],
+  "distance_metric": "cosine",
+  "nap_params": {
+    "n_random_examples": 200,
+    "error_mode": "None"
+  },
+  "topomap_params": {
+    "neuron_activations": {
+      "use_naps": true
+    },
+    "methods": ["UMAP_PSO"]
+  },
+  "plot_params": {
+    "plot_inputs": true,
+    "avg_inputs": false,
+    "ordered": true,
+    "scale": 2.0,
+    "use_title": false,
+    "plot_individually": false
+  }
+}
