@@ -6,12 +6,15 @@
   ],
   "distance_metric": "cosine",
   "nap_params": {
-    "n_random_examples": 200,
+    "n_random_examples": 1000,
     "error_mode": "None"
   },
   "topomap_params": {
     "neuron_activations": {
-      "use_naps": true
+      "use_naps": false,
+      "n_random_examples": 1000,
+      "balance_by_label": false,
+      "use_correct_only": true
     },
     "methods": ["UMAP_PSO"]
   },

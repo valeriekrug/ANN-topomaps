@@ -1,12 +1,5 @@
-"""
-Collection of functions to load a config.json
-- load the json file
-- assert that entries are valid and complete
-- insert default values for missing entries if applicable
-"""
-
 import json
-
+import os
 
 def assert_bool(par, name):
     assert type(par) == bool, \
@@ -177,6 +170,7 @@ def check_plot_params(config_dict):
 
 
 def load_config(path):
+    print(os.getcwd())
     with open(path) as config_file:
         config_dict = json.load(config_file)
 

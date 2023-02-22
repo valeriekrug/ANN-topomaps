@@ -1,8 +1,3 @@
-"""
-functions that are used for the topomap computation
-but which are not exclusive for ANN topographic maps
-"""
-
 import numpy as np
 import networkx as nx
 from minisom import MiniSom
@@ -13,12 +8,10 @@ from sklearn.metrics import euclidean_distances
 from umap import UMAP
 
 
+# functions that are used for topomap computation
+# but are not exclusive for it
+
 def random_layout(n_neurons):
-    """
-    computes a random uniform layout
-    :param n_neurons: number of neurons/feature maps
-    :return: coordinates as ndarray
-    """
     coordinates = np.random.uniform(0, 1, size=(n_neurons, 2))
     return coordinates
 
@@ -27,10 +20,6 @@ def make_threshold_graph(dist_mat, t, make_one_cluster=True):
     """
     creates a threshold graph from a distance matrix
     any two nodes are connected if their distance is below t
-    :param dist_mat: condensed distance matrix
-    :param t: distance threshold
-    :param make_one_cluster: link small connected components to the largest component
-    :return: nx.graph object
     """
     dist_mat = squareform(dist_mat)
     adj = np.zeros_like(dist_mat)
@@ -58,12 +47,6 @@ def make_threshold_graph(dist_mat, t, make_one_cluster=True):
 
 
 def layout_graph(graph, as_array=True):
-    """
-    compute a graph layout and convert it to coordinates
-    :param graph: nx.graph
-    :param as_array: convert layout dict to ndarray
-    :return: coordinates as dict, or ndarray if as_array=True
-    """
     layout = nx.drawing.layout.fruchterman_reingold_layout(graph)
     if as_array:
         layout = np.array(list(layout.values()))
@@ -78,13 +61,6 @@ def tanh(x, inv=False):
 
 
 def train_PSO(dist_mat, n_steps=1000, pos_init=None):
-    """
-    Particle Swarm Optimization training
-    :param dist_mat: condensed distance matrix
-    :param n_steps: number of update steps
-    :param pos_init: optional initial coordinates as ndarray. If given, global force weighting parameters are set to 0
-    :return: coordinates as ndarray
-    """
     dist_mat = squareform(dist_mat)
     if pos_init is None:
         positions = np.random.rand(dist_mat.shape[0], 2)
@@ -143,13 +119,6 @@ def train_PSO(dist_mat, n_steps=1000, pos_init=None):
 
 
 def som_winners_to_coordinates(som, values):
-    """
-    Obtains coordinates for each element (neuron/feature map) in values according to winner SOM position.
-    Multiple neurons matching to the same position are distributed in a circle around the coordinate.
-    :param som: minisom object
-    :param values: input values for which to find SOM positions
-    :return: coordinates as ndarray
-    """
     n_instances = values.shape[0]
     winners = som.win_map(values, return_indices=True)
 
@@ -174,17 +143,10 @@ def som_winners_to_coordinates(som, values):
 
 
 def train_SOM(values, n_epochs=10):
-    """
-    training a square SOM using the minisom package
-    :param values: training values
-    :param n_epochs: number of epochs
-    :return: trained minisom object
-    """
     n_instances, n_features = values.shape
 
-    # three different size options
-    # som_dim = int(np.sqrt(5*np.sqrt(values_shape[-1]))) # common rule of thumb for SOM
-    # som_dim = som_dim//2  # manually adapting the rule of thumb to get less sparse topopmaps
+    #     som_dim = int(np.sqrt(5*np.sqrt(values_shape[-1]))) # common rule of thumb for SOM
+    #     som_dim = som_dim//2  # manually adapting the rule of thumb to get less sparse topopmaps
     som_dim = int(np.sqrt(n_instances)) + 1  # available space for every channel
 
     if som_dim < 2:
@@ -208,11 +170,6 @@ def train_SOM(values, n_epochs=10):
 
 
 def compute_PCA(dist_mat):
-    """
-    Principal Component Analysis of a distance matrix
-    :param dist_mat: condensed distance matrix
-    :return:  first and second principal component as ndarray
-    """
     dist_mat = squareform(dist_mat)
     pca = PCA(n_components=2)
     coordinates = pca.fit_transform(dist_mat)
@@ -221,33 +178,16 @@ def compute_PCA(dist_mat):
 
 
 def compute_TSNE(dist_mat):
-    """
-    computes 2D tSNE
-    :param dist_mat: condensed distance matrix
-    :return: tSNE result as ndarray
-    """
     dist_mat = squareform(dist_mat)
     return TSNE(init='pca', learning_rate='auto', n_components=2).fit_transform(dist_mat)
 
 
 def compute_UMAP(dist_mat):
-    """
-    computes 2D UMAP
-    :param dist_mat: condensed distance matrix
-    :return: UMAP result as ndarray
-    """
-    dist_mat = squareform(dist_mat)
+    #dist_mat = squareform(dist_mat)
     return UMAP(n_components=2).fit_transform(dist_mat)
 
 
 def rotate_via_numpy(xy, deg, scale=True):
-    """
-    rotates a ndarray of 2D coordinate values around the center of origin [0,0]
-    :param xy: coordinates as ndarray
-    :param deg: degree to rotate
-    :param scale: after rotation, scale coordinates to [0,1] in both dimensions
-    :return: coordinates as ndarray
-    """
     radians = (deg * 2 * np.pi) / 360
 
     x, y = np.transpose(xy)
@@ -265,12 +205,6 @@ def rotate_via_numpy(xy, deg, scale=True):
 
 
 def get_all_rotations(xy, res=1):
-    """
-    compute rotations of the same values with different degrees
-    :param xy: coordinates as ndarray
-    :param res: degree difference between two consecutive steps
-    :return: 3D ndarray of rotated coordinates
-    """
     degs = np.arange(0, 360, res)[1:]
     n_degs = len(degs)
 
@@ -283,12 +217,6 @@ def get_all_rotations(xy, res=1):
 
 
 def get_rotation_dist_mats(reference, rotations):
-    """
-    compute distances between a reference layout and rotated query layouts
-    :param reference: reference layout (2D ndarray)
-    :param rotations: rotated query layouts (3D ndarray)
-    :return: list of distance matrices between reference and rotation
-    """
     dist_mats = np.zeros(shape=[rotations.shape[0]] + [reference.shape[0]] + [rotations.shape[1]])
     for i, rot in enumerate(rotations):
         dist_mats[i] = euclidean_distances(reference, rotations[i])

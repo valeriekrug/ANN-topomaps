@@ -1,13 +1,9 @@
-"""
-plotting functions that are not exclusive for ANN topographic maps
-"""
-
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist
-
 
 def compute_linkage(cond_dist_mat, linkage_method='average'):
     linkage = hierarchy.linkage(cond_dist_mat,
@@ -37,4 +33,5 @@ def get_dendrogram_order(linkage):
 
 def compute_distance_metric(values, metric):
     dist_mat = pdist(values, metric)
+    values = None
     return dist_mat

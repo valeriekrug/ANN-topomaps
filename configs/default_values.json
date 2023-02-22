@@ -1,6 +1,6 @@
 {
   "layers": [
-    0
+    1
   ],
   "distance_metric": "cosine",
   "nap_params": {
@@ -11,7 +11,7 @@
     "neuron_activations": {
       "use_naps": true
     },
-    "methods": ["UMAP_PSO"]
+    "methods": ["graph_PSO"]
   },
   "plot_params": {
     "plot_inputs": true,
