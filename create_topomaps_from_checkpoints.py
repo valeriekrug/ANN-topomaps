@@ -1,23 +1,17 @@
 import sys
 import os
-import ipywidgets as widgets
 import re
-import argparse
 import pickle
 
-os.environ['HTTP_PROXY'] = 'http://fp.cs.ovgu.de:3210/'
-os.environ['HTTPS_PROXY'] = 'http://fp.cs.ovgu.de:3210/'
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-sys.path.insert(0,'/scratch/python_envs/annalyzer_env/python/lib/python3.8/site-packages/')
 #os.environ["TF_GPU_ALLOCATOR"]= "cuda_malloc_async"
 
 import argparse
 
-from src.neuron_activations import get_NAPs, get_neuron_activations, get_neuron_activations_of_checkpoint, get_NAPs_of_checkpoint
-from src.topomap_class import TopomapVisualizer, load_experiment
+from src.neuron_activations import get_neuron_activations_of_checkpoint, get_NAPs_of_checkpoint
+from src.topomap_class import TopomapVisualizer
 from src.config import load_config
-from src.topomap_quality_utils import compute_topomap_image_quality
 
 config_path = "configs/examples/mnist_mlp.json"
 output_dir = os.path.join("output_base_path", config_path.split('/')[-1].split('.')[0])
