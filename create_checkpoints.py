@@ -1,19 +1,9 @@
-import sys
 import os
-import ipywidgets as widgets
-import re
 
-sys.path.insert(0, os.path.join('/scratch/python_envs/annalyzer_env/python/lib/python3.8/site-packages/'))
-os.environ['HTTP_PROXY'] = 'http://fp.cs.ovgu.de:3210/'
-os.environ['HTTPS_PROXY'] = 'http://fp.cs.ovgu.de:3210/'
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-#os.environ["TF_GPU_ALLOCATOR"]= "cuda_malloc_async"
 
-import argparse
-
-from src.neuron_activations import get_NAPs, get_neuron_activations, get_neuron_activations_of_checkpoint, get_NAPs_of_checkpoint
-from src.topomap_class import TopomapVisualizer, load_experiment
+from src.neuron_activations import get_NAPs
 from src.config import load_config
 
 config_path = "configs/examples/mnist_mlp.json"
