@@ -2,11 +2,10 @@
 
 This repository complements the paper:
 ```
-Andreas Krug, Raihan Kabir Ratul, Sebastian Stober (2022),
+Valerie Krug, Raihan Kabir Ratul, Christopher Olson, Sebastian Stober,
 "Visualizing Deep Neural Networks with Topographic Activation Maps".
-arXiv preprint arXiv:2204.03528
 ```
-https://arxiv.org/abs/2204.03528
+Preprint available at https://arxiv.org/abs/2204.03528
 
 ## Usage
 This section describes how to compute topographic maps of existing Deep Neural Network models.  
