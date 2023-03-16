@@ -1,9 +1,6 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.join('/scratch/python_envs/annalyzer/python/lib/python3.8/site-packages/'))
-# os.environ['HTTP_PROXY'] = 'http://proxy:3128/'
-# os.environ['HTTPS_PROXY'] = 'http://proxy:3128/'
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import argparse
 

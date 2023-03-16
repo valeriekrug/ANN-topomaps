@@ -356,6 +356,7 @@ class TopomapVisualizer:
                     group_inputs = group_inputs[random_example_id]
                     self.plotted_inputs[int(group_idx)] = group_inputs
                 elif self.plotted_inputs[int(group_idx)] is None:
+                    #print(group_inputs)
                     random_example_id = np.random.permutation(np.arange(len(group_inputs)))[0]
                     group_inputs = group_inputs[random_example_id]
                     self.plotted_inputs[int(group_idx)] = group_inputs

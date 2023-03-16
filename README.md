@@ -2,11 +2,10 @@
 
 This repository complements the paper:
 ```
-Andreas Krug, Raihan Kabir Ratul, Sebastian Stober (2022),
+Valerie Krug, Raihan Kabir Ratul, Christopher Olson, Sebastian Stober,
 "Visualizing Deep Neural Networks with Topographic Activation Maps".
-arXiv preprint arXiv:2204.03528
 ```
-https://arxiv.org/abs/2204.03528
+Preprint available at https://arxiv.org/abs/2204.03528
 
 ## Usage
 This section describes how to compute topographic maps of existing Deep Neural Network models.  
@@ -41,3 +40,9 @@ adding a pre-trained model:
 adding a data set
 - provide a new data loader in `src.models.load_data()`
 - add the new data set name to `allowed_dataset_values` in `src.config.check_general_params()`
+
+## Visualizing Training Processes
+
+`python3 create_checkpoints.py -c "</path/to/config.json>"`
+
+`sh run_topomapcreator_from_checkpoint.sh`

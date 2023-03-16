@@ -13,15 +13,17 @@ from src.neuron_activations import get_neuron_activations_of_checkpoint, get_NAP
 from src.topomap_class import TopomapVisualizer
 from src.config import load_config
 
-config_path = "configs/examples/mnist_mlp.json"
-output_dir = os.path.join("output_base_path", config_path.split('/')[-1].split('.')[0])
-checkpoint_path = 'output_base_path/checkpoints_for_video/'
 
 parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--config', help='path to config.json', required=True)
 parser.add_argument('-i', '--index', help='Current checkpoint index', required=True)
 
 args = parser.parse_args()
+
+config_path = args.config
 index = (int(args.index))
+output_dir = os.path.join("output_base_path", config_path.split('/')[-1].split('.')[0])
+checkpoint_path = 'checkpoints_for_tp/'
 
 config = load_config(config_path)
 model_name = config["model"]
