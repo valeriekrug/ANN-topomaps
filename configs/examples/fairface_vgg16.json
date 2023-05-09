@@ -1,7 +1,6 @@
 {
   "model": "FAIRFACE-VGG16",
   "data": "FAIRFACE",
-  "data_path": "/path_to_FairFace_data/",
   "layers": [
     3, 6, 10, 14, 18, 21
   ],

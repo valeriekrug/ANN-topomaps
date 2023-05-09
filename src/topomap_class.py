@@ -1,23 +1,18 @@
-"""
-TopomapVisualizer class for
-- storing all parameters of the used configuration,
-- storing the computed NAPs and activations
-- computing and saving topographic maps layouts and coloring.
-- plotting the topographic maps
-"""
-
 import os.path
 import copy
 import pickle
 import shutil
+import re
 
+import numpy as np
 from scipy import interpolate
 
-from src.evaluate_topomaps import compute_topomap_image_quality
+from src.topomap_quality_utils import compute_topomap_image_quality
 from src.topomaps import *
 from src.utils import *
 from src.visualization import *
-
+from matplotlib import cm
+from matplotlib.colors import Normalize
 
 def load_experiment(pkl_file_path):
     with open(pkl_file_path, 'rb') as object_file:
@@ -45,7 +40,8 @@ def reshape_to_2d(ndarray):
 
 class TopomapVisualizer:
     def __init__(self, nap_values, inputs=None, group_names=None,
-                 neuron_activations=None, distance_metric='cosine', plot_layout=None):
+                 neuron_activations=None, distance_metric='cosine', plot_layout=None, distance_mat=None, group_dist=None, links=None, group_ord=None, do_distance_calculations=True
+                ):
 
         self.error_mode = nap_values['error_mode']
         nap_values = nap_values['values']
@@ -70,6 +66,8 @@ class TopomapVisualizer:
                 ncol = self.n_groups  # //2
                 plot_layout = (nrow, ncol)
         self.plot_layout = plot_layout
+        
+        self.plotted_inputs = None
 
         if group_names is None:
             group_names = np.arange(self.n_groups)
@@ -89,12 +87,35 @@ class TopomapVisualizer:
         self.clim = dict()
 
         self.topomaps = dict()
-        self.distance_matrices = dict()
-        self.group_distances = dict()
-        self.linkages = dict()
-        self.group_order = dict()
+        if distance_mat is not None:
+            self.distance_matrices = distance_mat
+        else:
+            self.distance_matrices = dict()
+            
+        if distance_mat is not None:
+            self.distance_matrices = distance_mat
+        else:
+            self.distance_matrices = dict()
+          
+        if group_dist is not None:
+            self.group_distances = group_dist
+        else:
+            self.group_distances = dict()
+        
+        if links is not None:
+            self.linkages = links
+        else:
+            self.linkages = dict()
+        
+        if group_ord is not None:
+            self.group_order = group_ord
+        else:
+            self.group_order = dict()
 
-        self.used_metric = None
+        if not do_distance_calculations:
+            self.used_metric = distance_metric
+        else:
+            self.used_metric = None
 
         self.layers = [*self.naps.keys()]
 
@@ -110,7 +131,6 @@ class TopomapVisualizer:
                 self.channel_color_per_group[layer] = dict(zip(group_names, aggregated_naps))
 
             self.clim[layer] = symmetric_clim(np.concatenate([*self.channel_color_per_group[layer].values()]))
-
             if neuron_activations is None:
                 self.neuron_activations[layer] = np.transpose(np.stack([*self.channel_color_per_group[layer].values()]))
             else:
@@ -120,12 +140,14 @@ class TopomapVisualizer:
             self.topomaps[layer] = dict()
 
             # to avoid recomputing distance matrices, keep them in a dict
-            self.distance_matrices[layer] = dict()
-            self.group_distances[layer] = dict()
-            self.linkages[layer] = dict()
-            self.group_order[layer] = dict()
+            if do_distance_calculations:
+                self.distance_matrices[layer] = dict()
+                self.group_distances[layer] = dict()
+                self.linkages[layer] = dict()
+                self.group_order[layer] = dict()
 
-        self.change_distance_metric(distance_metric)
+        if do_distance_calculations:
+            self.change_distance_metric(distance_metric)
 
         self.plot_params = {'cmap': 'bwr',
                             'scale': 2,
@@ -210,21 +232,21 @@ class TopomapVisualizer:
             coordinates = train_PSO(dist_mat,
                                     pos_init=self.topomaps[layer]['graph'])
         elif method == 'PCA':
-            coordinates = compute_PCA(dist_mat)
+            coordinates = compute_PCA(self.neuron_activations[layer])
         elif method == 'PCA_PSO':
             if 'PCA' not in computed_methods:
                 self.compute_topomap('PCA', layer)
             coordinates = train_PSO(dist_mat,
                                     pos_init=self.topomaps[layer]['PCA'])
         elif method == 'TSNE':
-            coordinates = compute_TSNE(dist_mat)
+            coordinates = compute_TSNE(self.neuron_activations[layer])
         elif method == 'TSNE_PSO':
             if 'TSNE' not in computed_methods:
                 self.compute_topomap('TSNE', layer)
             coordinates = train_PSO(dist_mat,
                                     pos_init=self.topomaps[layer]['TSNE'])
         elif method == 'UMAP':
-            coordinates = compute_UMAP(dist_mat)
+            coordinates = compute_UMAP(self.neuron_activations[layer])
         elif method == 'UMAP_PSO':
             if 'UMAP' not in computed_methods:
                 self.compute_topomap('UMAP', layer)
@@ -317,9 +339,45 @@ class TopomapVisualizer:
         ax.set_yticks([])
         if self.plot_params['use_title']:
             ax.set_title(str(group_idx))
+            
+    def _plot_consistant_input_on_axis(self, ax, group_idx):
+        if group_idx in self.group_names:
+            group_inputs = self.inputs[group_idx]
+            group_idx = re.search(r'\d+', group_idx).group()
+
+            if self.plot_params['avg_inputs']:
+                group_inputs = np.mean(group_inputs, 0)
+            else:
+                if self.plotted_inputs is None:
+                    group_names = [*self.inputs.keys()]
+                    
+                    self.plotted_inputs = [None] * len(np.unique([s.split('_')[0] for s in group_names]))
+                    random_example_id = np.random.permutation(np.arange(len(group_inputs)))[0]
+                    group_inputs = group_inputs[random_example_id]
+                    self.plotted_inputs[int(group_idx)] = group_inputs
+                elif self.plotted_inputs[int(group_idx)] is None:
+                    #print(group_inputs)
+                    random_example_id = np.random.permutation(np.arange(len(group_inputs)))[0]
+                    group_inputs = group_inputs[random_example_id]
+                    self.plotted_inputs[int(group_idx)] = group_inputs
+                else:
+                    group_inputs = self.plotted_inputs[int(group_idx)]
+            if group_inputs.shape[-1] == 1:
+                ax.imshow(group_inputs[:, :, 0],
+                          clim=[0, 1],
+                          cmap='Greys')
+            else:
+                ax.imshow(group_inputs)
+        else:
+            ax.set_axis_off()
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+        if self.plot_params['use_title']:
+            ax.set_title(str(group_idx))
 
     def plot_topomap_on_axis(self, ax, coordinate_information, layer, group_idx, interpolated, method=None,
-                             output_dir=None):
+                             output_dir=None, return_quality=False):
         axes = [ax]
         plot_individually = self.plot_params['plot_individually']
         if plot_individually:
@@ -335,6 +393,13 @@ class TopomapVisualizer:
                                               colors,
                                               (xx, yy),
                                               method='linear')
+                if return_quality:
+                    interpolated_colors = np.transpose(new_xy[:, ::-1])
+                    c_min, c_max = self.clim[layer]
+                    norm = Normalize(c_min, c_max)
+                    image_array = norm(interpolated_colors)
+                    image_array = cm.bwr(image_array)[:, :, :3]
+                    quality_results = compute_topomap_image_quality([image_array], 'components', params=None)
                 for ax in axes:
                     ax.imshow(np.transpose(new_xy[:, ::-1]),
                               clim=self.clim[layer],
@@ -363,8 +428,10 @@ class TopomapVisualizer:
                         format='pdf', bbox_inches='tight', pad_inches=0.02)
 
             plt.close(fig)
+        if return_quality:
+            return quality_results[0]
 
-    def plot_topomap(self, method, layer, interpolated=True, resolution=100, output_dir=None):
+    def plot_topomap(self, method, layer, interpolated=True, resolution=100, output_dir=None, as_img=False, epoch=None, use_same_input_as_representative = False, return_quality = False):
         positions = self.topomaps[layer][method]
         x, y = np.transpose(positions)
 
@@ -382,7 +449,10 @@ class TopomapVisualizer:
                 self.plot_params['plot_inputs'] = False
             else:
                 if self.error_mode == 'binary_contrast':
-                    nrow += 2
+                    if not use_same_input_as_representative:
+                        nrow += 2
+                    else:
+                        nrow += 1
                 elif self.error_mode == 'confusion_matrix':
                     nrow += 1
                     ncol += 1
@@ -424,24 +494,30 @@ class TopomapVisualizer:
                 order = np.arange(len(np.unique(lbls)))
 
             if self.error_mode == 'binary_contrast':
+                quality_results = []
                 for col, lbl in enumerate(order):
                     group_idx = str(lbl) + '_correct'
 
                     row = 0
                     if plot_inputs:
                         ax = axes[row, col]
-                        self.plot_input_on_axis(ax, group_idx)
+                        if not use_same_input_as_representative:
+                            self.plot_input_on_axis(ax, group_idx)
+                        else:
+                            self._plot_consistant_input_on_axis(ax, group_idx)
                         row += 1
                     ax = axes[row, col]
-                    self.plot_topomap_on_axis(ax, coordinate_information, layer, group_idx, interpolated,
-                                              output_dir=output_file_stem)
+                    quality_results.append(self.plot_topomap_on_axis(ax, coordinate_information, layer, group_idx, interpolated, method,
+                                          output_dir=output_file_stem, return_quality=True))
+                    #self.plot_topomap_on_axis(ax, coordinate_information, layer, group_idx, interpolated,
+                    #                          output_dir=output_file_stem)
                     row += 1
 
                     group_idx = str(lbl) + '_wrong'
                     ax = axes[row, col]
                     self.plot_topomap_on_axis(ax, coordinate_information, layer, group_idx, interpolated,
                                               output_dir=output_file_stem)
-                    if plot_inputs:
+                    if plot_inputs and not use_same_input_as_representative:
                         row += 1
                         ax = axes[3, col]
                         self.plot_input_on_axis(ax, group_idx)
@@ -469,27 +545,41 @@ class TopomapVisualizer:
                 order = self.get_group_ordering(layer)
             else:
                 order = self.group_names
+            quality_results = []
             for plot_idx, group_idx in enumerate(order):
                 row = plot_idx // ncol
                 col = plot_idx % ncol
 
                 ax = axes[row, col]
                 if plot_inputs:
-                    self.plot_input_on_axis(ax, group_idx)
+                    if not use_same_input_as_representative:
+                        self.plot_input_on_axis(ax, group_idx)
+                    else:
+                        self._plot_consistant_input_on_axis(ax, group_idx)
                     ax = axes[row + (nrow // 2), col]
 
-                self.plot_topomap_on_axis(ax, coordinate_information, layer, group_idx, interpolated, method,
-                                          output_dir=output_file_stem)
+                quality_results.append(self.plot_topomap_on_axis(ax, coordinate_information, layer, group_idx, interpolated, method,
+                                          output_dir=output_file_stem, return_quality=True))
 
         if output_dir is None:
             plt.show()
         else:
             fig.tight_layout()
-            plt.savefig(
-                output_file_stem + '.pdf',
-                format='pdf', bbox_inches='tight', pad_inches=0.02)
+            if not as_img:
+                plt.savefig(
+                    output_file_stem + '.pdf',
+                    format='pdf', bbox_inches='tight', pad_inches=0.02)
+            else:
+                current_epoch = (re.search(r'(?<=epoch_)\d+', epoch).group())
+                current_batch = (re.search(r'(?<=batch_)\d+', epoch).group())
+                plt.savefig(
+                    output_file_stem + '_epoch-' + current_epoch + '_batch-' + current_batch + '.png',
+                    format='png', bbox_inches='tight', pad_inches=0.02)
             plt.close(fig)
-        return output_file_stem
+        if return_quality:
+            return quality_results, output_file_stem
+        else:
+            return output_file_stem
 
     def plot_inputs(self, layer, output_dir=None):
         nrow, ncol = self.plot_layout
@@ -532,9 +622,7 @@ class TopomapVisualizer:
             for plot_idx, group_idx in enumerate(order):
                 row = plot_idx // ncol
                 col = plot_idx % ncol
-
                 ax = axes[row, col]
-
                 self.plot_input_on_axis(ax, group_idx)
 
         if output_dir is None:

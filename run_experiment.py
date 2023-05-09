@@ -1,20 +1,16 @@
-"""
-Script with additional parameters to conduct robustness experiments by performing repeated computations.
-Parameters:
-    '-c',  '--config'            path to config.json
-    '-o',  '--output'            output directory
-    '-f',  '--force-recompute'   force recomputing of existing runs (optional), default=False
-    '-r',  '--repeat'            number of repetitions (optional), default=1
-    '-rt', '--repeat-topomap'    repeat only topomap layout computation (optional), default=False
-    '-t',  '--time'              store runtime (optional), default=False
-
-Output:
-    - saved evaluation metrics:   <output_dir>/evaluation.npy
-    - plotted evaluation metrics: <output_dir>/eval_<metric>.pdf
-"""
-
 import shutil
+import sys
 import os
+
+sys.path.insert(0, os.path.join('/scratch/python_envs/annalyzer/python/lib/python3.8/site-packages/'))
+# os.environ['HTTP_PROXY'] = 'http://proxy:3128/'
+# os.environ['HTTPS_PROXY'] = 'http://proxy:3128/'
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+"""
+Script with additional parameters (repetitions, runtime analyses...) for running paper experiments in an automated way.
+"""
+
 import argparse
 import time
 import numpy as np
@@ -22,22 +18,12 @@ import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 
 from src.neuron_activations import get_NAPs, get_neuron_activations
-from src.topomap_class import TopomapVisualizer
+from src.topomap_class import TopomapVisualizer, load_experiment
 from src.config import load_config, assert_element_of
 
 
 def visualize_method_error(eval_array_path, method_names, metric_ranges, has_auc=False, plot_runtimes=False,
                            output_dir=None):
-    """
-    function for plotting evaluation results
-    :param eval_array_path: path to evaluation.npy
-    :param method_names: list of names of layouting methods
-    :param metric_ranges: index ranges for each metric
-    :param has_auc: whether the range includes an AUC score
-    :param plot_runtimes: whether to plot a runtime plot
-    :param output_dir: output directory for the plots
-    :return: None
-    """
     colors = np.array(['#E377C2', '#3C75AF', '#EF8536', '#529E3E', '#C43932', '#85584E', '#8D69B8'])
     method_names = np.array(method_names)
     eval_array = np.load(eval_array_path)
@@ -59,6 +45,7 @@ def visualize_method_error(eval_array_path, method_names, metric_ranges, has_auc
         aucs = aucs[method_order, :]
         runtimes = runtimes[method_order, :]
 
+        # if vis_curves:
         fig, axes = plt.subplots(2, 1, figsize=(3.5, 5))
 
         ax = axes[0]
@@ -133,7 +120,6 @@ def visualize_method_error(eval_array_path, method_names, metric_ranges, has_auc
                 plt.close(fig)
 
 
-# parsing arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', help='path to config.json', required=True)
 parser.add_argument('-o', '--output', help='output directory', required=True)
@@ -158,10 +144,6 @@ track_time = args.time
 config = load_config(config_path)
 model_name = config["model"]
 data_name = config["data"]
-if "data_path" in config.keys():
-    data_path = config["data_path"]
-else:
-    data_path = None
 layers_of_interest = config["layers"]
 distance_metric = config["distance_metric"]
 nap_params = config['nap_params']
@@ -190,7 +172,6 @@ if track_time:
 
 assert_element_of(eval_metrics, ['resize_mse', 'blur_mse'], 'eval_metrics', each_element=True)
 
-# running repeated analyses according to the config or loading the evaluation.npy if it is pre-computed
 if force_recompute or not os.path.isfile(os.path.join(output_dir, "evaluation.npy")):
     eval_results = np.zeros([len(layers_of_interest),
                              len(topomap_params['methods']),
@@ -203,16 +184,14 @@ if force_recompute or not os.path.isfile(os.path.join(output_dir, "evaluation.np
                                     data_name,
                                     layers_of_interest,
                                     nap_params["n_random_examples"],
-                                    error_mode=nap_params["error_mode"],
-                                    data_path=data_path)
+                                    error_mode=nap_params["error_mode"])
 
             neuron_activations = None
             if not topomap_params["neuron_activations"]["use_naps"]:
                 neuron_activations = get_neuron_activations(model_name,
                                                             data_name,
                                                             layers_of_interest,
-                                                            topomap_params["neuron_activations"],
-                                                            data_path=data_path)
+                                                            topomap_params["neuron_activations"])
 
             ANNScan = TopomapVisualizer(NAPs,
                                         inputs=inputs,
@@ -229,7 +208,7 @@ if force_recompute or not os.path.isfile(os.path.join(output_dir, "evaluation.np
 
                 ANNScan.compute_topomap(method, layer)
                 if rep == 0:
-                    ANNScan.plot_topomap(method, layer, interpolated=True, output_dir=output_dir)
+                    ANNScan.plot_topomap(method, layer, interpolated=True, output_dir=output_dir, epoch=rep)
 
                 if track_time:
                     end = time.time()
@@ -244,17 +223,15 @@ if force_recompute or not os.path.isfile(os.path.join(output_dir, "evaluation.np
                     evaluation_measure, has_auc = ANNScan.evaluate_topomap_quality(layer, method, metric, params,
                                                                                    output_dir=eval_example_output_dir)
                     from_idx, to_idx = metric_ranges[metric]
-
-                    # for 'rep' repetitions, store the quality
-                    # for each layer, layouting method, evaluation metric and parameter
                     eval_results[l_id, m_id, from_idx:to_idx, rep] = evaluation_measure
                 shutil.rmtree(eval_example_output_dir)
+
+            
 
     np.save(os.path.join(output_dir, "evaluation.npy"), eval_results)
 else:
     print("using evaluation.npy. To force recomputation, use the -f flag.")
 
-# plot the computed or loaded evaluation measures
 visualize_method_error(eval_array_path=os.path.join(output_dir, "evaluation.npy"),
                        method_names=topomap_params['methods'],
                        metric_ranges=metric_ranges,
