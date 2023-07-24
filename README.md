@@ -1,11 +1,12 @@
 # ANN-topomaps
 
-This repository complements the paper:
+This repository complements the paper
 ```
-Valerie Krug, Raihan Kabir Ratul, Christopher Olson, Sebastian Stober,
-"Visualizing Deep Neural Networks with Topographic Activation Maps".
+Valerie Krug, Raihan Kabir Ratul, Christopher Olson and Sebastian Stober.
+Visualizing Deep Neural Networks with Topographic Activation Maps. 2023.
+In HHAI 2023: Augmenting Human Intellect (pp. 138-152). IOS Press.
 ```
-Preprint available at https://arxiv.org/abs/2204.03528
+available at [https://doi.org/10.3233/FAIA230080](https://doi.org/10.3233/FAIA230080)
 
 ## Usage
 This section describes how to compute topographic maps of existing Deep Neural Network models.  
