@@ -1,12 +1,24 @@
 # ANN-topomaps
 
-This repository complements the paper
+This repository mainly complements the paper
 ```
 Valerie Krug, Raihan Kabir Ratul, Christopher Olson and Sebastian Stober.
 Visualizing Deep Neural Networks with Topographic Activation Maps. 2023.
 In HHAI 2023: Augmenting Human Intellect (pp. 138-152). IOS Press.
 ```
-available at [https://doi.org/10.3233/FAIA230080](https://doi.org/10.3233/FAIA230080)
+available at [https://doi.org/10.3233/FAIA230080](https://doi.org/10.3233/FAIA230080).
+
+Further, we used this implementation in experiments of the following papers:
+```
+Valerie Krug, Christopher Olson and Sebastian Stober.
+Relation of Activity and Confidence when Training Deep Neural Networks. 2023.
+Uncertainty meets Explainability | Workshop at ECML-PKDD 2023, Torino, Italy
+```
+```
+Valerie Krug, Christopher Olson and Sebastian Stober.
+Visualizing Bias in Activations of Deep Neural Networks as Topographic Maps. 2023.
+Aequitas 2023: Workshop on Fairness and Bias in AI | co-located with ECAI 2023, Kraków, Poland
+```
 
 ## Usage
 This section describes how to compute topographic maps of existing Deep Neural Network models.  
