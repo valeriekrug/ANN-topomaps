@@ -20,6 +20,8 @@ Visualizing Bias in Activations of Deep Neural Networks as Topographic Maps. 202
 Aequitas 2023: Workshop on Fairness and Bias in AI | co-located with ECAI 2023, Kraków, Poland
 ```
 
+For a more flexible and extended implementation, check out https://github.com/valeriekrug/iNNtrospect
+
 ## Usage
 This section describes how to compute topographic maps of existing Deep Neural Network models.  
 Topographic map layouts and visualizations are computed with the `run_config.py` according to a configuration specified in a `config.json`.
