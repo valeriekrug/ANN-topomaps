@@ -31,7 +31,7 @@ In the publication, robustness analyses are performed for multiple runs of the s
 `python3 run_experiment.py -c </path/to/config.json> -o </output/path/> -r 100`
 
 ### interactive notebook
-For a more interactive use, we provide an ipython notebook in a shared [Google Drive folder](https://drive.google.com/drive/folders/1EXcOStfZklJ0IeaA9A1SnXbY8HOCNmGZ?usp=sharing).     
+For a more interactive use, we provide an ipython notebook in a shared [Google Drive folder](https://drive.google.com/drive/folders/1dse9Q31FYsu5n-NN7bb_KcLh2f2oOIzO?usp=sharing).     
 The directory contains a copy of this git repository's source code as well as the pre-trained models used in the publication.  
 Instead of using configuration files in json format, you can interactively choose and run the configuration with a user interface.
 
